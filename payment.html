@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>S1mpleSite — Payment</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-2xl font-bold mb-2">Checkout</h2>
+      <p id="planDescription" class="text-sm text-gray-600 mb-4">Loading...</p>
+
+      <form id="paymentForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Name on card</label>
+          <input id="cardName" class="w-full p-3 border rounded" placeholder="Jane Doe" required />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Card number</label>
+          <input id="cardNumber" class="w-full p-3 border rounded" placeholder="4242 4242 4242 4242" maxlength="19" required />
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-sm font-medium mb-1">MM/YY</label>
+            <input id="exp" class="w-full p-3 border rounded" placeholder="09/30" required />
+          </div>
+          <div class="col-span-2">
+            <label class="block text-sm font-medium mb-1">CVC</label>
+            <input id="cvc" class="w-full p-3 border rounded" placeholder="123" maxlength="4" required />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-600" id="priceLabel">Price: $0</div>
+          <div class="flex gap-3">
+            <a href="index.html" class="px-4 py-2 border rounded">Back</a>
+            <button id="payBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Pay</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="status" class="mt-4 text-sm"></div>
+    </div>
+  </div>
+
+  <script>
+/* Robust payment handler — paste to payment.html replacing existing <script> block */
+(function() {
+  // helper: read query param
+  function q(name) {
+    try {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    } catch (e) { return null; }
+  }
+
+  // safe DOM getters
+  const byId = id => document.getElementById(id);
+
+  const plan = q('plan') || 'Unknown';
+  const price = q('price') || '0';
+
+  // fill UI safely
+  const planEl = byId('planDescription');
+  const priceEl = byId('priceLabel');
+  if (planEl) planEl.textContent = plan + ' — $' + price;
+  if (priceEl) priceEl.textContent = 'Price: $' + price;
+
+  const form = byId('paymentForm');
+  const status = byId('status');
+  const payBtn = byId('payBtn');
+
+  // if essential elements are missing, log error to console & show user-friendly message
+  if (!form || !status || !payBtn) {
+    console.error('Payment UI missing elements:', { form: !!form, status: !!status, payBtn: !!payBtn });
+    if (status) status.innerHTML = '<span class="text-red-600">Payment form is not available. Please reload the page.</span>';
+    return;
+  }
+
+  // format card input: allow spaces every 4 digits
+  const cardInput = byId('cardNumber');
+  if (cardInput) {
+    cardInput.addEventListener('input', () => {
+      let v = cardInput.value.replace(/\D/g,'').slice(0,19);
+      cardInput.value = v.replace(/(.{4})/g, '$1 ').trim();
+    });
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    status.textContent = '';
+    if (payBtn.disabled) return;
+
+    const name = (byId('cardName')?.value || '').trim();
+    const card = (byId('cardNumber')?.value || '').replace(/\s+/g,'');
+    const exp = (byId('exp')?.value || '').trim();
+    const cvc = (byId('cvc')?.value || '').trim();
+
+    // simple validation
+    if (!name || !card || !exp || !cvc) {
+      status.innerHTML = '<span class="text-red-600">Fill all fields.</span>';
+      return;
+    }
+    if (!/^\d{12,19}$/.test(card)) {
+      status.innerHTML = '<span class="text-red-600">Card number looks invalid.</span>';
+      return;
+    }
+    if (!/^\d{3,4}$/.test(cvc)) {
+      status.innerHTML = '<span class="text-red-600">CVC invalid.</span>';
+      return;
+    }
+
+    // disable button and show processing
+    payBtn.disabled = true;
+    const origText = payBtn.textContent;
+    payBtn.textContent = 'Processing...';
+
+    status.innerHTML = '<span class="text-gray-600">Processing payment (demo)...</span>';
+
+    // simulate network/payment delay
+    setTimeout(() => {
+      // success simulation
+      status.innerHTML = '<span class="text-green-700">Payment successful! Thank you.</span>';
+      payBtn.textContent = 'Paid';
+
+      // save order to localStorage (demo)
+      try {
+        const key = 'simplesite_orders_v1';
+        const orders = JSON.parse(localStorage.getItem(key) || '[]');
+        orders.push({ id: Date.now(), plan, price, name, date: new Date().toISOString() });
+        localStorage.setItem(key, JSON.stringify(orders));
+      } catch (err) {
+        console.warn('Could not save order to localStorage', err);
+      }
+
+      // show receipt
+      const container = document.querySelector('.bg-white.p-6.rounded-lg.shadow') || document.body;
+      const receipt = document.createElement('div');
+      receipt.className = 'mt-4 p-4 bg-gray-50 rounded';
+      receipt.innerHTML = `
+        <div class="font-semibold">Receipt</div>
+        <div>Plan: ${escapeHtml(plan)}</div>
+        <div>Price: $${escapeHtml(price)}</div>
+        <div>Name: ${escapeHtml(name)}</div>
+        <div>Date: ${new Date().toLocaleString()}</div>
+        <div class="mt-2"><a href="index.html" class="text-indigo-600 hover:underline">Return to site</a></div>
+      `;
+      container.appendChild(receipt);
+
+    }, 1200);
+  });
+
+  // small helper to escape text in receipt
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
+  }
+
+})();
+</script>
+
+</body>
+</html>

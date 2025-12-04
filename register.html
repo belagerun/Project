@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>S1mpleSite — Register</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React + Babel (in-browser JSX) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function Header() {
+      return (
+        <header className="bg-white shadow-sm">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-300 rounded-lg flex items-center justify-center text-white font-bold">S</div>
+              <div>
+                <h1 className="text-lg font-semibold">S1mpleSite</h1>
+                <p className="text-xs text-gray-500">Clean presentation template</p>
+              </div>
+            </div>
+
+            <nav className="hidden md:flex gap-6 text-sm">
+              <a href="index.html" className="hover:text-indigo-600">Home</a>
+              <a href="about.html" className="hover:text-indigo-600">About</a>
+              <a href="register.html" className="hover:text-indigo-600 font-semibold text-indigo-600">Register</a>
+              <a href="index.html#contact" className="hover:text-indigo-600">Contact</a>
+            </nav>
+
+            <div className="hidden md:block">
+              <a href="index.html" className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:opacity-95">Get Started</a>
+            </div>
+
+            <div className="md:hidden">
+              <button aria-label="menu" className="p-2">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function useLocalUsers() {
+      // Manage users in localStorage as a small mock DB
+      const key = 'simplesite_users_v1';
+      const get = () => {
+        try {
+          return JSON.parse(localStorage.getItem(key) || '[]');
+        } catch {
+          return [];
+        }
+      };
+      const set = (arr) => localStorage.setItem(key, JSON.stringify(arr));
+      return { get, set };
+    }
+
+    function RegisterForm({ onRegistered }) {
+      const local = useLocalUsers();
+      const [name, setName] = useState('');
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [confirm, setConfirm] = useState('');
+      const [role, setRole] = useState('Student');
+      const [error, setError] = useState('');
+      const [success, setSuccess] = useState('');
+
+      useEffect(() => {
+        if (error) {
+          const id = setTimeout(()=>setError(''), 4000);
+          return () => clearTimeout(id);
+        }
+      }, [error]);
+
+      useEffect(() => {
+        if (success) {
+          const id = setTimeout(()=>setSuccess(''), 4000);
+          return () => clearTimeout(id);
+        }
+      }, [success]);
+
+      function validateEmail(e) {
+        // simple email regex
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+      }
+
+      function handleSubmit(ev) {
+        ev.preventDefault();
+        setError('');
+        setSuccess('');
+
+        if (!name.trim() || !email.trim() || !password) {
+          setError('Please fill all required fields.');
+          return;
+        }
+        if (!validateEmail(email)) {
+          setError('Please enter a valid email address.');
+          return;
+        }
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters.');
+          return;
+        }
+        if (password !== confirm) {
+          setError('Passwords do not match.');
+          return;
+        }
+
+        // check duplicate email
+        const users = local.get();
+        if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+          setError('This email is already registered.');
+          return;
+        }
+
+        // store user (note: password is stored as plain text here for demo only)
+        const newUser = {
+          id: Date.now(),
+          name: name.trim(),
+          email: email.trim(),
+          role,
+          createdAt: new Date().toISOString()
+        };
+        users.push(newUser);
+        local.set(users);
+
+        setSuccess('Registration successful!');
+        setName(''); setEmail(''); setPassword(''); setConfirm(''); setRole('Student');
+
+        if (onRegistered) onRegistered(newUser);
+      }
+
+      return (
+        <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-2">Create an account</h2>
+          <p className="text-sm text-gray-500 mb-4">Fill in the form to register. This demo stores accounts in your browser (localStorage).</p>
+
+          {error && <div className="mb-4 text-sm text-red-700 bg-red-50 p-2 rounded">{error}</div>}
+          {success && <div className="mb-4 text-sm text-green-700 bg-green-50 p-2 rounded">{success}</div>}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Full name</label>
+              <input value={name} onChange={e=>setName(e.target.value)} className="w-full p-3 border rounded" placeholder="Jane Doe" required />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input value={email} onChange={e=>setEmail(e.target.value)} type="email" className="w-full p-3 border rounded" placeholder="you@example.com" required />
+            </div>
+
+            <div className="md:flex md:gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-1">Password</label>
+                <input value={password} onChange={e=>setPassword(e.target.value)} type="password" className="w-full p-3 border rounded" placeholder="********" required />
+              </div>
+              <div className="flex-1 mt-3 md:mt-0">
+                <label className="block text-sm font-medium mb-1">Confirm password</label>
+                <input value={confirm} onChange={e=>setConfirm(e.target.value)} type="password" className="w-full p-3 border rounded" placeholder="********" required />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Role</label>
+              <select value={role} onChange={e=>setRole(e.target.value)} className="w-full p-3 border rounded">
+                <option>Student</option>
+                <option>Developer</option>
+                <option>Designer</option>
+                <option>Project Manager</option>
+                <option>QA Engineer</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button type="submit" className="px-5 py-3 bg-indigo-600 text-white rounded-md">Register</button>
+              <a href="index.html" className="text-sm text-indigo-600 hover:underline">Back to Home</a>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
+    function UsersList() {
+      const local = useLocalUsers();
+      const [users, setUsers] = useState(local.get());
+
+      useEffect(() => {
+        // update when storage changes in same tab (on registration we call onRegistered to update)
+        const onStorage = () => setUsers(local.get());
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+      }, []);
+
+      function removeUser(id) {
+        if (!confirm('Delete this user?')) return;
+        const arr = local.get().filter(u=>u.id !== id);
+        local.set(arr);
+        setUsers(arr);
+      }
+
+      if (!users.length) {
+        return <div className="mt-6 text-sm text-gray-600">No registered users yet.</div>;
+      }
+
+      return (
+        <div className="mt-6">
+          <h4 className="font-semibold mb-2">Registered users (demo)</h4>
+          <div className="overflow-x-auto bg-white p-4 rounded shadow">
+            <table className="w-full text-sm">
+              <thead className="text-left text-gray-500">
+                <tr>
+                  <th className="pb-2">Name</th>
+                  <th className="pb-2">Email</th>
+                  <th className="pb-2">Role</th>
+                  <th className="pb-2">Registered</th>
+                  <th className="pb-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u.id} className="border-t">
+                    <td className="py-2">{u.name}</td>
+                    <td className="py-2">{u.email}</td>
+                    <td className="py-2">{u.role}</td>
+                    <td className="py-2">{new Date(u.createdAt).toLocaleString()}</td>
+                    <td className="py-2">
+                      <button onClick={()=>removeUser(u.id)} className="text-xs text-red-600 hover:underline">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function Page() {
+      const [justRegistered, setJustRegistered] = useState(null);
+
+      function handleRegistered(user) {
+        setJustRegistered(user);
+        // trigger update for UsersList by writing to localStorage (already done in RegisterForm)
+        // force re-render by dispatching storage event (same-tab)
+        window.dispatchEvent(new Event('storage'));
+      }
+
+      return (
+        <div>
+          <Header />
+          <main className="max-w-6xl mx-auto px-6 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <RegisterForm onRegistered={handleRegistered} />
+              <div className="space-y-4">
+                <div className="bg-white p-6 rounded-lg shadow">
+                  <h3 className="text-lg font-semibold">Why register?</h3>
+                  <ul className="mt-3 list-disc list-inside text-gray-600">
+                    <li>Save demo accounts in your browser.</li>
+                    <li>Showcase simple user flow to your instructor.</li>
+                    <li>Manage accounts: delete any demo account.</li>
+                  </ul>
+                </div>
+
+                <div className="bg-white p-6 rounded-lg shadow">
+                  <UsersList />
+                </div>
+              </div>
+            </div>
+          </main>
+
+          <footer className="border-t mt-12">
+            <div className="max-w-6xl mx-auto px-6 py-6 text-sm text-gray-500 flex flex-col md:flex-row justify-between items-center">
+              <div>© {new Date().getFullYear()} S1mpleSite</div>
+              <div className="mt-3 md:mt-0">Made with ❤️</div>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<Page />);
+  </script>
+</body>
+</html>

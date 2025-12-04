@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>S1mpleSite — About</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-900 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function IconMenu() {
+      return (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 6h16M4 12h16M4 18h16"
+                stroke="currentColor" strokeWidth="1.6"
+                strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    }
+
+    function Header({ onToggle, open }) {
+      return (
+        <header className="bg-white shadow-sm sticky top-0 z-20">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-300 rounded-lg
+                              flex items-center justify-center text-white font-bold">S</div>
+              <div>
+                <h1 className="text-lg font-semibold">S1mpleSite</h1>
+                <p className="text-xs text-gray-500">Clean presentation template</p>
+              </div>
+            </div>
+
+            <nav className="hidden md:flex gap-6 text-sm">
+              <a href="index.html" className="hover:text-indigo-600">Home</a>
+              <a href="#about" className="hover:text-indigo-600">About</a>
+              <a href="#team" className="hover:text-indigo-600">Team</a>
+              <a href="index.html#contact" className="hover:text-indigo-600">Contact</a>
+            </nav>
+
+            <div className="hidden md:block">
+              <a href="index.html"
+                 className="px-4 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:opacity-95">
+                Get Started
+              </a>
+            </div>
+
+            <div className="md:hidden">
+              <button aria-label="menu" onClick={onToggle} className="p-2">
+                <IconMenu />
+              </button>
+            </div>
+          </div>
+
+          <div className={`md:hidden bg-white border-t ${open ? 'block' : 'hidden'}`}>
+            <div className="px-6 py-3 flex flex-col gap-2">
+              <a href="index.html" className="py-2">Home</a>
+              <a href="#about" className="py-2">About</a>
+              <a href="#team" className="py-2">Team</a>
+              <a href="index.html#contact" className="py-2">Contact</a>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function AboutSection() {
+      return (
+        <section id="about" className="max-w-6xl mx-auto px-6 py-16">
+          <h2 className="text-3xl font-bold">About the Project</h2>
+          <p className="mt-4 text-gray-600">
+            S1mpleSite is a minimalist and clean template designed for educational presentations
+            and demos. It works completely offline — simply open the file in a browser and show it
+            to your instructor.
+          </p>
+
+          <div className="mt-8 grid md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="font-semibold">Goals</h3>
+              <ul className="mt-3 list-disc list-inside text-gray-600">
+                <li>Show a working interface without installing anything</li>
+                <li>Demonstrate responsive design</li>
+                <li>Easily customize for any topic</li>
+              </ul>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="font-semibold">Technical details</h3>
+              <p className="mt-3 text-gray-600">
+                Uses React and Tailwind via CDN — no installation, build tools, or dependencies required.
+              </p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function TeamSection() {
+      const members = [
+        { name: "Kamal Muratov", role: "Developer" },
+        { name: "Vasileva Maria", role: "Designer" },
+        { name: "Meirmanily Bekzat", role: "QA Engineer" },
+        { name: "Elman Mustapa", role: "Project Manager" }
+      ];
+
+      return (
+        <section id="team" className="max-w-6xl mx-auto px-6 py-12 bg-indigo-50">
+          <h3 className="text-2xl font-bold">Our Team</h3>
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+            {members.map((m, i) => (
+              <div key={i} className="bg-white p-5 rounded-lg shadow-sm text-center">
+                <div className="h-16 w-16 mx-auto rounded-full bg-indigo-100 flex items-center justify-center font-semibold text-indigo-700">
+                  {m.name.split(" ").map(n => n[0]).join("")}
+                </div>
+                <div className="mt-3 font-semibold">{m.name}</div>
+                <div className="text-sm text-gray-500">{m.role}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="border-t mt-12">
+          <div className="max-w-6xl mx-auto px-6 py-6 text-sm text-gray-500 flex flex-col md:flex-row justify-between items-center">
+            <div>© {new Date().getFullYear()} S1mpleSite</div>
+            <div className="mt-3 md:mt-0">Made with ❤️</div>
+          </div>
+        </footer>
+      );
+    }
+
+    function App() {
+      const [open, setOpen] = useState(false);
+
+      return (
+        <div className="min-h-screen">
+          <Header onToggle={() => setOpen(v => !v)} open={open} />
+          <main>
+            <AboutSection />
+            <TeamSection />
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
