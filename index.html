@@ -203,20 +203,83 @@
       );
     }
 
+    // ---- REPLACED CONTACT BLOCK: sends to Formspree endpoint (your endpoint) ----
     function ContactBlock() {
+      const [name, setName] = React.useState('');
+      const [email, setEmail] = React.useState('');
+      const [message, setMessage] = React.useState('');
+      const [status, setStatus] = React.useState(''); // '', 'sending', 'success', 'error'
+
+      const FORM_ENDPOINT = "https://formspree.io/f/mvgeqagn"; // <-- your endpoint
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        setStatus('sending');
+
+        try {
+          const res = await fetch(FORM_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, message })
+          });
+
+          if (res.ok) {
+            setStatus('success');
+            setName(''); setEmail(''); setMessage('');
+          } else {
+            const data = await res.json().catch(()=>({}));
+            console.warn('Formspree error', data);
+            setStatus('error');
+          }
+        } catch (err) {
+          console.error(err);
+          setStatus('error');
+        }
+
+        // clear status after a while
+        setTimeout(()=>{ setStatus(''); }, 5000);
+      }
+
       return (
         <section id="contact" className="max-w-6xl mx-auto px-6 py-12">
           <h3 className="text-2xl font-bold">Contact</h3>
-          <p className="mt-2 text-gray-600">Leave a message — we will get back to you shortly.</p>
-          <form className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4"
-                onSubmit={(e)=>{e.preventDefault(); alert('Message sent (demo).');}}>
-            <input className="p-3 border rounded-md" placeholder="Name" required />
-            <input className="p-3 border rounded-md" placeholder="Email" type="email" required />
-            <textarea className="p-3 border rounded-md md:col-span-2" rows={5}
-                      placeholder="Message" required></textarea>
-            <div className="md:col-span-2">
-              <button type="submit"
-                      className="px-5 py-3 bg-indigo-600 text-white rounded-md">Send</button>
+          <p className="mt-2 text-gray-600">Leave a message — you will receive it by email.</p>
+
+          <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              className="p-3 border rounded-md"
+              placeholder="Name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
+            <input
+              className="p-3 border rounded-md"
+              placeholder="Email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+            <textarea
+              className="p-3 border rounded-md md:col-span-2"
+              rows={5}
+              placeholder="Message"
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              required
+            />
+            <div className="md:col-span-2 flex items-center gap-4">
+              <button
+                type="submit"
+                className="px-5 py-3 bg-indigo-600 text-white rounded-md"
+                disabled={status === 'sending'}
+              >
+                {status === 'sending' ? 'Sending...' : 'Send'}
+              </button>
+
+              {status === 'success' && <div className="text-sm text-green-700">Message sent — check your email.</div>}
+              {status === 'error' && <div className="text-sm text-red-600">Error sending message. Try again.</div>}
             </div>
           </form>
         </section>
